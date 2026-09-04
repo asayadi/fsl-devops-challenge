@@ -48,10 +48,16 @@ jobs:
           node-version: '15'
 
       - name: Restore node_modules
+        id: cache-restore-lint
         uses: actions/cache/restore@v3
         with:
           path: node_modules
           key: node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: node-modules-
+
+      - name: Install dependencies (cache miss fallback)
+        if: steps.cache-restore-lint.outputs.cache-hit != 'true'
+        run: npm install
 
       - name: Run linter
         run: npm run lint
@@ -72,10 +78,16 @@ jobs:
           node-version: '15'
 
       - name: Restore node_modules
+        id: cache-restore-test
         uses: actions/cache/restore@v3
         with:
           path: node_modules
           key: node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: node-modules-
+
+      - name: Install dependencies (cache miss fallback)
+        if: steps.cache-restore-test.outputs.cache-hit != 'true'
+        run: npm install
 
       - name: Run tests
         env:
@@ -95,10 +107,16 @@ jobs:
           node-version: '15'
 
       - name: Restore node_modules
+        id: cache-restore-build
         uses: actions/cache/restore@v3
         with:
           path: node_modules
           key: node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: node-modules-
+
+      - name: Install dependencies (cache miss fallback)
+        if: steps.cache-restore-build.outputs.cache-hit != 'true'
+        run: npm install
 
       - name: Build project
         run: npm run build
