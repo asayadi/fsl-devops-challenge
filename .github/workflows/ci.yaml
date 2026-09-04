@@ -4,10 +4,15 @@ on:
   push:
     branches:
       - main
-      - 'feature-*'
+      - devel
+      - stage
+      - 'feature/**'
+      - 'bugfix/**'
   pull_request:
     branches:
       - main
+      - devel
+      - stage
 
 jobs:
   install:
@@ -19,7 +24,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '15'
 
       - name: Install dependencies
         run: npm install
@@ -40,13 +45,19 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '15'
 
       - name: Restore node_modules
+        id: cache-restore-lint
         uses: actions/cache/restore@v3
         with:
           path: node_modules
           key: node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: node-modules-
+
+      - name: Install dependencies (cache miss fallback)
+        if: steps.cache-restore-lint.outputs.cache-hit != 'true'
+        run: npm install
 
       - name: Run linter
         run: npm run lint
@@ -64,13 +75,19 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '15'
 
       - name: Restore node_modules
+        id: cache-restore-test
         uses: actions/cache/restore@v3
         with:
           path: node_modules
           key: node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: node-modules-
+
+      - name: Install dependencies (cache miss fallback)
+        if: steps.cache-restore-test.outputs.cache-hit != 'true'
+        run: npm install
 
       - name: Run tests
         env:
@@ -78,7 +95,7 @@ jobs:
         run: npm run test
 
   build:
-    needs: [lint]
+    needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -87,13 +104,19 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '15'
 
       - name: Restore node_modules
+        id: cache-restore-build
         uses: actions/cache/restore@v3
         with:
           path: node_modules
-          key: deps-${{ hashFiles('package-lock.json') }}
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: node-modules-
+
+      - name: Install dependencies (cache miss fallback)
+        if: steps.cache-restore-build.outputs.cache-hit != 'true'
+        run: npm install
 
       - name: Build project
         run: npm run build
