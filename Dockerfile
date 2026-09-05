@@ -2,6 +2,9 @@ FROM node:15-alpine AS build
 
 WORKDIR /app
 
+# node-sass requires Python and native build tools (node-gyp)
+RUN apk add --no-cache python3 make g++
+
 COPY package*.json ./
 RUN npm install
 
